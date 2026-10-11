@@ -61,11 +61,61 @@ You specialize in 6 core pedagogy pillars:
 6. Eco-Friendly School
 
 Strict Guidelines:
-- Give practical, direct, classroom-ready solutions.
+- Give practical, direct, classroom-ready solutions with low-cost teaching techniques.
 - Never output markdown code blocks, JSON schemas, heavy bulleting, or asterisk symbols.
-- Produce clean, spoken-word sentences so text-to-speech audio sounds fluid and clear.
+- Produce clean, spoken-word sentences so text-to-speech audio sounds fluid and natural.
 """
 
+# Resilient Model Inference with Auto-Failover
+def auto_healing_inference(chat_history):
+    errors_encountered = []
+    for model_name in ACTIVE_MODELS:
+        try:
+            res = client.chat.completions.create(
+                model=model_name,
+                messages=chat_history,
+                temperature=0.5,
+                max_tokens=350
+            )
+            return res.choices[0].message.content
+        except Exception as err:
+            errors_encountered.append(f"{model_name}: {str(err)}")
+            continue
+    raise RuntimeError(f"All models failed: {'; '.join(errors_encountered)}")
+
+def clean_for_natural_voice(text):
+    text = re.sub(r'[*#_`~>]', '', text)
+    text = re.sub(r'\[.*?\]\(.*?\)', '', text)
+    text = re.sub(r'\s+', ' ', text)
+    return text.strip()
+
+# -------------------------------------------------------------------
+# Sidebar - 6 Core Pillars & Quick Click Buttons
+# -------------------------------------------------------------------
+st.sidebar.title("📚 6 Core Pillars")
+st.sidebar.caption("Kisi bhi pillar par click karein aur seedhe details payein:")
+
+pillars = [
+    ("1. Digital & Traditional Learning", "Digital aur Traditional Learning ke balance, classroom me integration aur labhon ke bare me vistaar se batayein."),
+    ("2. Teaching Learning Material (TLM)", "Low-cost TLM ka upyog, zero-cost materials se teaching aids banana aur classroom me use karne ke practical tarike batayein."),
+    ("3. Low-Cost Smart Class", "Bina bade budget ke kabaad ya phone/projector se Low-Cost Smart Class kaise banayein aur chalayein, batayein."),
+    ("4. Inclusive Education", "Samaveshi shiksha (Inclusive Education) kaise lagu karein, har tarah ke bachhe ko ek sath kaise sikhayein, batayein."),
+    ("5. Activity Based Learning (ABL)", "Activity Based Learning (ABL) ke practical games aur interactive activities batayein jo primary/middle classes me kaam aayein."),
+    ("6. Eco-Friendly School", "Eco-Friendly School banane ke aasan tarike jaise kitchen garden, waste management aur green campus initiatives batayein.")
+]
+
+clicked_pillar_query = None
+
+for title, prompt_desc in pillars:
+    if st.sidebar.button(title, use_container_width=True):
+        clicked_pillar_query = f"Mujhe '{title}' ke baare mein vistaar se batayein. {prompt_desc}"
+
+st.sidebar.markdown("---")
+st.sidebar.info("💡 **Tip:** Upar bhasha (Hindi, Bhojpuri, ya English) chunein, AI usi bhasha me vivaad-rahit uttar aur aawaz dega.")
+
+# -------------------------------------------------------------------
+# Main Screen
+# -------------------------------------------------------------------
 st.title("🚀 Udaan - Ek Nayi Soch")
 active_engine = ACTIVE_MODELS[0] if ACTIVE_MODELS else "Auto-Select"
 st.caption(f"Educational AI Mentor | Active Engine: `{active_engine}`")
@@ -85,13 +135,14 @@ with col_clear:
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
+# Display conversation
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.write(msg["content"])
         if msg.get("audio"):
             st.audio(msg["audio"], format="audio/mp3")
 
-st.write("🎙️ **Bol kar poochhein:**")
+st.write("🎙️ **Bol kar poochhein ya Sidebar se Pillar chunein:**")
 audio_bytes = audio_recorder(
     text="Mic click karke bolein",
     recording_color="#e53935",
@@ -121,33 +172,17 @@ typed_text = st.chat_input("Apna sawaal yahan likhein ya mic use karein...")
 if typed_text:
     user_text = typed_text.strip()
 
-def auto_healing_inference(chat_history):
-    errors_encountered = []
-    for model_name in ACTIVE_MODELS:
-        try:
-            res = client.chat.completions.create(
-                model=model_name,
-                messages=chat_history,
-                temperature=0.5,
-                max_tokens=300
-            )
-            return res.choices[0].message.content
-        except Exception as err:
-            errors_encountered.append(f"{model_name}: {str(err)}")
-            continue
-    raise RuntimeError(f"All models failed: {'; '.join(errors_encountered)}")
+# Check if a sidebar pillar button was clicked
+if clicked_pillar_query:
+    user_text = clicked_pillar_query
 
-def clean_for_natural_voice(text):
-    text = re.sub(r'[*#_`~>]', '', text)
-    text = re.sub(r'\[.*?\]\(.*?\)', '', text)
-    text = re.sub(r'\s+', ' ', text)
-    return text.strip()
-
+# Generate and display response
 if user_text:
     st.session_state.messages.append({"role": "user", "content": user_text})
     with st.chat_message("user"):
         st.write(user_text)
 
+    # Dynamic Language Prompts
     if selected_lang == "Shuddh Hindi (शुद्ध हिन्दी)":
         lang_directive = (
             "उत्तर केवल शुद्ध, स्पष्ट, सरल और व्यावहारिक हिन्दी में दें। "
@@ -157,11 +192,11 @@ if user_text:
         lang_directive = (
             "रउआ के केवल शुद्ध, स्वाभाविक अउर मीठ भोजपुरी (Devanagari) में उत्तर देवे के बा। "
             "नियम:\n"
-            "- 'मैं' भा 'मीं' कबो मत लिखीं, हमेशा 'हम' लिखीं (जइसे: 'हम एकदम ठीक बानी')।\n"
+            "- 'मैं' भा 'मीं' कबो मत लिखीं, हमेशा 'हम' लिखीं (जइसे: 'हम बतावत बानी')।\n"
             "- 'आप' खातिर 'रउआ' भा 'अपने' लिखीं।\n"
             "- 'है/हैं' खातिर 'बा' / 'बानी' / 'बाटे' लिखीं।\n"
             "- 'और' खातिर 'अउर' लिखीं, 'आर' मत लिखीं।\n"
-            "- बनावटी भा गलत शब्द मत बनाईं, एकदम घरेलू अउर आदरभाव वाली बोली बोलीं।"
+            "- बनावटी शब्द मत बनाईं, एकदम घरेलू, आदरभाव वाली अउर व्यावहारिक बोली बोलीं।"
         )
     else:
         lang_directive = (
@@ -180,6 +215,7 @@ if user_text:
                 ai_reply = auto_healing_inference(full_payload)
                 st.write(ai_reply)
 
+                # Pure Indian Accent Voice
                 generated_audio = None
                 try:
                     speech_ready_text = clean_for_natural_voice(ai_reply)
